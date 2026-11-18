@@ -11,7 +11,7 @@
       "referer": "https://azorafly.com/",
       "is_active": true,
       "version_source": 1,
-      "script": "azora_mangablack_source.js",
+      "script": "azora_hikari_source.js",
       "tabs": []
     }
   ]
