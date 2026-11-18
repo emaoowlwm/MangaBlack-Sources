@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "default_server": "azorafly",
+  "locale": "ar",
+  "sources": [
+    {
+      "id": "azorafly",
+      "name": "Azorafly",
+      "base_url": "https://azorafly.com",
+      "language": "ar",
+      "referer": "https://azorafly.com/",
+      "is_active": true,
+      "version_source": 1,
+      "script": "azora_mangablack_source.js",
+      "tabs": []
+    }
+  ]
+}
