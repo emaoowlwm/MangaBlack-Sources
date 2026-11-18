@@ -1,14 +1,14 @@
 /*
  * ============================================================================
- *  Azora Moon (azoramoon.com) — سكربت مصدر بنمط هيكاري بالضبط
+ *  Azora Moon (azoramoon.com) — سكربت مصدر مستقل (azoramoon)
  * ============================================================================
- *  العقد (من APK هيكاري المفكوك):
+ *  العقد (واجهة عامة لسكربتات المصادر):
  *    خمس دوال إلزامية: Scraper.scrapeHome / scrapeSearch / scrapeDetails /
  *                      scrapeChapters / scrapePages
  *    الشبكة عبر الجسر فقط:
- *      window.HikariBridge.nativeHttpGet(url, headersJson) → HTML خام
- *      window.HikariBridge.nativeHttpPost(url, body)
- *      window.HikariBridge.postResult(json) / postError(msg)
+ *      window.MangaBlackBridge.nativeHttpGet(url, headersJson) → HTML خام
+ *      window.MangaBlackBridge.nativeHttpPost(url, body)
+ *      window.MangaBlackBridge.postResult(json) / postError(msg)
  *    لا Jsoup ولا fetch — السكربت يحلل HTML بنفسه ويرجع JSON موحّد.
  *
  *  المحدّدات أدناه كلها مأخوذة من HTML حقيقي جُلب من الموقع (2026-11-16)
@@ -26,7 +26,7 @@
  *                                                   → صفحات الفصل بالترتيب
  *      (تحقّق على chapter-174: 15 صورة مباشرة ومرتّبة داخل HTML)
  *    ✘ الحالة / الكاتب / الرسّام                    → غير موجودة في الصفحة = null
- *      (لا تخمين — قاعدة هيكاري: الغائب يبقى فارغًا)
+ *      (لا تخمين — القاعدة: الغائب يبقى فارغًا)
  *
  *  حدود معروفة (غير مُتحقَّق):
  *    - /search?q= لا يرجع نتائج من الخادم (تحميل client-side) → قد يعود فارغًا.
@@ -46,7 +46,7 @@ var AZ = {
 };
 
 function AZ_get(url) {
-  var body = window.HikariBridge.nativeHttpGet(url, JSON.stringify(AZ.headers));
+  var body = window.MangaBlackBridge.nativeHttpGet(url, JSON.stringify(AZ.headers));
   return (body === null || body === undefined) ? "" : String(body);
 }
 
@@ -175,14 +175,14 @@ Scraper.scrapeHome = function (arg) {
   var page = params.page || 1;
   var url = (query.indexOf("http") === 0) ? query : AZ_abs(query.charAt(0) === "/" ? query : "/" + query);
   var html = AZ_get(url);
-  if (!html) { window.HikariBridge.postError("Azora: تعذّر جلب الصفحة الرئيسية"); return; }
+  if (!html) { window.MangaBlackBridge.postError("Azora: تعذّر جلب الصفحة الرئيسية"); return; }
   var items = AZ_seriesFrom(html);
   var group = {
     title: params.title || "", query: query, page: page,
     hasMore: false, server: AZ.serverId,
     success: items.length > 0, data: items
   };
-  window.HikariBridge.postResult(JSON.stringify({
+  window.MangaBlackBridge.postResult(JSON.stringify({
     data: [group], server: AZ.serverId, success: items.length > 0
   }));
 };
@@ -190,10 +190,10 @@ Scraper.scrapeHome = function (arg) {
 /** البحث: صفحة /search?q= تحمّل نتائجها client-side — قد يعود فارغًا (غير مُتحقَّق) */
 Scraper.scrapeSearch = function (arg) {
   var q = (arg && typeof arg === "object") ? (arg.query || "") : String(arg || "");
-  if (!q) { window.HikariBridge.postResult(JSON.stringify({ data: [], success: true })); return; }
+  if (!q) { window.MangaBlackBridge.postResult(JSON.stringify({ data: [], success: true })); return; }
   var html = AZ_get(AZ.baseUrl + "/search?q=" + encodeURIComponent(q));
   var items = AZ_seriesFrom(html);
-  window.HikariBridge.postResult(JSON.stringify({ data: items, success: true }));
+  window.MangaBlackBridge.postResult(JSON.stringify({ data: items, success: true }));
 };
 
 /** arg = slug أو رابط مطلق لصفحة العمل */
@@ -201,10 +201,10 @@ Scraper.scrapeDetails = function (arg) {
   var v = (arg && typeof arg === "object") ? (arg.url || arg.slug) : arg;
   var url = AZ_abs(String(v));
   var html = AZ_get(url);
-  if (!html) { window.HikariBridge.postError("Azora: تعذّر جلب صفحة العمل"); return; }
+  if (!html) { window.MangaBlackBridge.postError("Azora: تعذّر جلب صفحة العمل"); return; }
 
   var t = html.match(/<h1[^>]*itemProp="name"[^>]*>([^<]+)/i) || html.match(/<h1[^>]*>([^<]+)</i);
-  if (!t) { window.HikariBridge.postError("Azora: لم يُعثر على عنوان العمل"); return; }
+  if (!t) { window.MangaBlackBridge.postError("Azora: لم يُعثر على عنوان العمل"); return; }
 
   var synopsis = null;
   var de = html.match(/itemProp="description"[^>]*>([\s\S]{0,6000}?)<\/div>/i);
@@ -247,7 +247,7 @@ Scraper.scrapeDetails = function (arg) {
     recommendations: [],
     referer: AZ.baseUrl + "/"
   };
-  window.HikariBridge.postResult(JSON.stringify(details));
+  window.MangaBlackBridge.postResult(JSON.stringify(details));
 };
 
 /** arg = slug أو رابط صفحة العمل — يرجع الفصول تنازليًا (الأحدث أولًا) */
@@ -256,7 +256,7 @@ Scraper.scrapeChapters = function (arg) {
   var url = AZ_abs(String(v));
   var seriesSlug = AZ_slugOfUrl(url);
   var html = AZ_get(url);
-  if (!html) { window.HikariBridge.postError("Azora: تعذّر جلب الفصول"); return; }
+  if (!html) { window.MangaBlackBridge.postError("Azora: تعذّر جلب الفصول"); return; }
 
   var chapters = AZ_chaptersFromFlight(html);
   var i, c;
@@ -266,7 +266,7 @@ Scraper.scrapeChapters = function (arg) {
   if (chapters.length === 0) chapters = AZ_chaptersFromLinks(html, seriesSlug);
 
   chapters.sort(function (a, b) { return b.number - a.number; });
-  window.HikariBridge.postResult(JSON.stringify({
+  window.MangaBlackBridge.postResult(JSON.stringify({
     data: chapters, hasMore: false, page: 1,
     server: AZ.serverId, success: chapters.length > 0, totalPages: 1
   }));
@@ -277,14 +277,14 @@ Scraper.scrapePages = function (arg) {
   var v = (arg && typeof arg === "object") ? (arg.url || arg.slug) : arg;
   var url = AZ_abs(String(v));
   var html = AZ_get(url);
-  if (!html) { window.HikariBridge.postError("Azora: تعذّر جلب صفحات الفصل"); return; }
+  if (!html) { window.MangaBlackBridge.postError("Azora: تعذّر جلب صفحات الفصل"); return; }
 
   var pages = AZ_pagesFrom(html);
   if (pages.length === 0) {
-    window.HikariBridge.postError("Azora: لم تُعثر على صور في هذا الفصل");
+    window.MangaBlackBridge.postError("Azora: لم تُعثر على صور في هذا الفصل");
     return;
   }
-  window.HikariBridge.postResult(JSON.stringify({
+  window.MangaBlackBridge.postResult(JSON.stringify({
     data: pages, server: AZ.serverId, success: true
   }));
 };
