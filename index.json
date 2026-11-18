@@ -1,18 +1,23 @@
 {
   "success": true,
-  "default_server": "azorafly",
   "locale": "ar",
+  "default_server": "azoramoon",
   "sources": [
     {
-      "id": "azorafly",
-      "name": "Azorafly",
-      "base_url": "https://azorafly.com",
+      "id": "azoramoon",
+      "name": "ازورا مانجا",
+      "base_url": "https://azoramoon.com",
       "language": "ar",
-      "referer": "https://azorafly.com/",
+      "referer": "https://azoramoon.com/",
       "is_active": true,
+      "version_code": 1,
       "version_source": 1,
-      "script": "azora_hikari_source.js",
-      "tabs": []
+      "verified": true,
+      "script": "azora_mangablack_source.js",
+      "tabs": [
+        { "title": "الأحدث", "query": "/latest-updates" },
+        { "title": "الرئيسية", "query": "/" }
+      ]
     }
   ]
 }
